@@ -11,18 +11,39 @@ FROM public."CovidDeaths"
 ORDER BY 1,2;
 
 --Looking at latest total cases for each country
-SELECT location, population, MAX(total_cases) as HighestInfectionCount, MAX((total_cases/population))*100 as pop_percentage
+SELECT location, population, MAX(total_cases) as HighestInfectionCount, MAX((total_cases/population))*100 as PercentPopulationInfected
 FROM public."CovidDeaths"
-WHERE continent IS NOT NULL AND total_cases IS NOT NULL
+WHERE continent IS NOT NULL
 GROUP BY 1,2
-ORDER BY 4 DESC;
+ORDER BY 4 DESC NULLS LAST;
+
+--Looking at latest total cases for each country
+SELECT location, population, date, MAX(total_cases) as HighestInfectionCount, MAX((total_cases/population))*100 as PercentPopulationInfected
+FROM public."CovidDeaths"
+WHERE continent IS NOT NULL
+GROUP BY 1,2,3
+ORDER BY 4 DESC NULLS LAST;
 
 --Looking at Highest death count per population
 SELECT location, population, MAX(total_deaths) as TotalDeathCount
 FROM public."CovidDeaths"
-WHERE continent IS NOT NULL AND total_deaths IS NOT NULL
+WHERE continent IS NOT NULL
 GROUP BY 1,2
 ORDER BY 3 DESC;
+
+--Looking at Continent total death count
+SELECT continent, MAX(population) AS population, SUM(new_deaths) as TotalDeathCount
+FROM public."CovidDeaths"
+WHERE continent IS NOT NULL
+GROUP BY 1
+ORDER BY 3 DESC;
+
+--Looking at Continent total death count
+SELECT continent, SUM(new_deaths) as TotalDeathCount
+FROM public."CovidDeaths"
+WHERE continent IS NOT NULL
+GROUP BY 1
+ORDER BY 2 DESC;
 
 --Looking at World total death count
 SELECT location, population, MAX(total_cases) AS TotalCases, MAX(total_deaths) as TotalDeathCount
@@ -31,19 +52,17 @@ WHERE location LIKE '%World'
 GROUP BY 1,2
 ORDER BY 3 DESC;
 
---Looking at Continent total death count
-SELECT continent, MAX(population) AS population, MAX(total_deaths) as TotalDeathCount
-FROM public."CovidDeaths"
-WHERE total_deaths IS NOT NULL and continent IS NOT NULL
-GROUP BY 1
-ORDER BY 3 DESC;
-
 --Global numbers
 SELECT SUM(new_cases) AS total_cases, SUM(new_deaths) AS total_deaths, SUM(new_deaths)/SUM(new_cases)*100 AS DeathPercentage
 FROM public."CovidDeaths"
 WHERE continent IS NOT NULL;
--- GROUP BY date
--- ORDER BY date
+
+-- Daily Covid Cases and Deaths
+SELECT date, SUM(new_cases) AS DailyCases, SUM(new_deaths) AS DailyDeaths
+FROM public."CovidDeaths"
+WHERE continent IS NOT NULL
+GROUP BY 1
+ORDER BY date;
 
 -- Looking at Total Population vs. Vaccinations
 SELECT dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations,
@@ -69,8 +88,7 @@ ORDER BY 2,3
 )
 
 SELECT *, (RollingPeopleVaccinated/population*100) AS RollingVaccinatedPercentage
-FROM PopvsVac
-WHERE new_vaccinations IS NOT NULL;
+FROM PopvsVac;
 
 
 -- -- Creating view to store data for later visualisations
